@@ -1,0 +1,54 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import sys, getopt, re, operator 
+
+def main(argv):
+	input_file = ""
+	output_file = ""
+
+	try:
+		opts, args = getopt.getopt(argv, "hi:o:",["ifile=","ofile="]) 
+	except getopt.GetoptError:
+		print "test.py -i <inputfile> -o <outputfile>"
+		print argv;
+		sys.exit(2);
+	for opt, arg in opts:
+		if opt == "-h":
+			print "wc.py -i <inputfile> -o <outputfile>"
+		elif opt in ("-i", "--ifile"):
+			input_file = arg
+		elif opt in ("-o", "--ofile"):
+			output_file = arg
+	print 'Input file is "', input_file
+	print 'Output file is "', output_file
+
+	f_in = open(input_file,"r")
+	f_out = open(output_file,"w")
+
+	sub_txt = ""
+	words_list = []
+	keywords = {}
+	result = ""
+	pattern = "[^\W\d]+"
+
+	sub_txt = f_in.read();
+	
+	words_list.extend(re.findall(pattern,sub_txt.lower(),re.U))
+	for word in words_list:
+		if word not in keywords: 
+			keywords[word] = 1
+		else:
+			keywords[word] += 1
+
+	sorted_x = sorted(keywords.iteritems(), key=operator.itemgetter(1), reverse=True)
+	result = "There are " + str(len(keywords)) + " words in file '" + input_file + "'" + "\n"  
+	for item in sorted_x:
+		result += item[0] + " | " + str(item[1]) + "\n";
+	
+	f_out.write(result)
+
+	f_in.close()
+	f_out.close()
+
+if __name__ == '__main__':
+	main(sys.argv[1:])
