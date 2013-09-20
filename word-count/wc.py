@@ -34,6 +34,7 @@ def main(argv):
     reader.writeToFile(output_file, keywords)
 
 
+
 if __name__ == '__main__':
     #main(sys.argv[1:])
     #files = reader.batchRead()
@@ -42,10 +43,17 @@ if __name__ == '__main__':
 
     spider = Spider()
     print spider.getCatLen()
-    spider.computeStats(['crude', 'livestock', 'earn', 'jobs' ])
-    spider.getCategoryTop('crude')
-    spider.getCategoryTop('earn')
-    spider.getCategoryTop('livestock')
-    spider.getCategoryTop('jobs')
+    catArray = ['crude', 'livestock', 'earn', 'jobs' ]
+    spider.computeStats(catArray)
+    # spider.getCategoryTop('crude')
+    # spider.getCategoryTop('earn')
+    # spider.getCategoryTop('livestock')
+    # spider.getCategoryTop('jobs')
+    spider.collectTopWords()
+    spider.train()
+    spider.test('test/21414')
+    # for cat in catArray:
+    #     results = spider.testCategories(cat)    
+    #     print str(reader.computePercent(results, cat)) + " | " + cat
     
-    print spider.train()
+    #spider.test('test/18621')

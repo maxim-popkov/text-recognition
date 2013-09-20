@@ -49,11 +49,12 @@ class Spider(object):
 		self.wordsStatDict = {}
 		self.topWords = set([])
 		self.activeCategories = []
+		self.classifier = None
 
 	def computeStats(self, categories):
 		files = batchReadReuters('training', categories)
 		for file_name in files:
-			raw_txt = readFromFile('/Users/dales/nltk_data/corpora/reuters/' + file_name)
+			raw_txt = readFromFile('/home/dales3d/nltk_data/corpora/reuters/' + file_name)
 			fileCategories = reuters.categories(file_name)
 			#for cat in categories:
 			#	if cat not in self.activeCategories:
@@ -74,19 +75,30 @@ class Spider(object):
 		for word in self.wordsStatDict:
 			for cat in self.wordsStatDict[word].categories:
 				if category == cat:
-					words[word] = self.wordsStatDict[word].categories[category] / self.wordsStatDict[word].idf 
+					words[word] = self.wordsStatDict[word].categories[category] # / self.wordsStatDict[word].idf 
 		sorted_x = sorted(words.iteritems(), key=operator.itemgetter(1), reverse=True)
 		for word in sorted_x[:100]:
 			self.topWords.add(word[0])
 		return self.topWords
+
+	def collectTopWords(self):
+		"""Collect for each category its top words and append to entire result"""
+		for category in self.activeCategories:
+			self.getCategoryTop(category)
 	
 	def getCatLen(self):
 		return len(reuters.categories())
 
 	def getFileFeatures(self, file_name):
-		raw_txt = readFromFile('/Users/dales/nltk_data/corpora/reuters/' + file_name)
+		raw_txt = readFromFile('/home/dales3d/nltk_data/corpora/reuters/' + file_name)
 		words = extractWords(raw_txt)
 		keywords = meter(words)
+		# ###Test IDF
+		# for word in keywords:
+		# 	if word in self.wordsStatDict:
+		# 		#print word
+		# 		keywords[word] = keywords[word] / self.wordsStatDict[word].idf 
+		# ###
 		sorted_x = sorted(keywords, key=lambda key: keywords[key], reverse=True)
 		features = {}
 		for word in self.topWords:
@@ -100,12 +112,28 @@ class Spider(object):
 			files = reuters.fileids(category)
 			for fi in files:
 				training_set.append((self.getFileFeatures(fi),category))
-		classifier = nltk.NaiveBayesClassifier.train(training_set)
+		self.classifier = nltk.NaiveBayesClassifier.train(training_set)
+		
+	def test(self, testFile):
 		####test/15618
-		test_feat = self.getFileFeatures('test/15254')
-		print self.topWords
+		test_feat = self.getFileFeatures(testFile)
 		print test_feat
-		return classifier.classify(test_feat)
+		result = self.classifier.classify(test_feat)
+		# self.classifier.labels()
+		# self.classifier.most_informative_features()
+	 # 	probs = self.classifier.prob_classify(test_feat)
+		# for sample in probs.samples():
+		# 	print sample + " " + "%.3f"%(probs.prob(sample))
+		return result
+
+	def testCategories(self, categories):
+		files = batchReadReuters('test', categories)
+		results = []
+		for testFile in files:
+			result = self.test(testFile)
+			results.append((testFile,result))
+		return results			
+
 
 	def __str__(self):
 		return self.__unicode__()
@@ -118,6 +146,12 @@ class Spider(object):
 		result += str(len(self.wordsStatDict))
 		return result
 
+def computePercent(results, category):
+	match = 0
+	for fileId, result in results:
+		if result == category:
+			match = match + 1
+	return 100.0 * match / len(results)
 
 def batchRead():
 	#STUB
